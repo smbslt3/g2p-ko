@@ -1,0 +1,130 @@
+Data and Model Notice / 데이터 및 모델 고지
+
+한국어
+
+1. 모델
+
+배포물의 숫자 읽기 분류 모델
+(src/g2p_ko/data/number_reading_model.json)은 규칙만으로 읽기를 확정할 수 없는
+숫자에만 사용됩니다. 간단한 다항 로지스틱 회귀가 다음 세 읽기 중 하나를
+선택하거나, 근거가 부족하면 기존 규칙의 판단을 유지합니다.
+
+- digitwise: 전화번호·식별번호처럼 한 자리씩 읽기
+- sino: 한자어 수사로 읽기
+- native: 고유어 수사로 읽기
+
+모델은 숫자의 길이와 값, 붙은 단위, 앞뒤 Kiwi 형태소의 표면형과 품사를 희소
+이진 자질로 사용합니다. 추론은 패키지에 저장된 계수를 순수 Python으로 계산하며
+학습 프레임워크나 원본 코퍼스가 필요하지 않습니다.
+
+2. 사용 데이터
+
+이 모델은 과학기술정보통신부의 재원으로 한국지능정보사회진흥원(NIA)의 지원을
+받아 구축되어 AI 허브에서 제공되는 "159. 숫자가 포함된 패턴 발화 데이터"
+버전 1.1(2023-06-28)을 기반으로 만들었습니다.
+
+사용한 자료와 필드는 다음과 같습니다.
+
+- 원본 Training·Validation 라벨링 JSON
+- script.scriptITN: 숫자가 포함된 문어형 입력
+- script.scriptTN: 사람이 검수한 발화형과 숫자 읽기 라벨
+- script.patternTheme·script.scriptId: 분할·감사에만 사용하고 모델 자질에는 미사용
+- 전체 21개 주제: 개인고유번호, 고유어기수·서수, 교통정보, 금융·은행,
+  나이·생년월일, 날짜·시간, 단위, 사업자번호, 사이즈, 사투리, 스포츠,
+  신분증번호, 외래영어, 자동생성번호, 주문정보, 주소·구역, 통계·수치,
+  통신번호, 통화·금액, 헬스케어
+
+같은 문장을 여러 화자가 읽은 레코드를 scriptITN 완전 일치 기준으로 제거하여
+4,293,738개 라벨 레코드를 148,658개 고유 문장으로 정리했습니다. 문장 해시로
+133,667개 train, 7,473개 dev, 7,518개 봉인 test로 분할했습니다.
+
+규칙이 판단을 요청한 숫자 구간만 학습 표본으로 추출했습니다. 최종 모델은 train의
+63,501개 판별 지점으로 학습했고, dev의 2,513개로 적용 임계값을 보정했으며,
+보정에 쓰지 않은 dev 1,095개로 효과를 확인했습니다. 봉인 test 7,518문장은
+학습·보정·규칙 개발에 사용하지 않았습니다.
+
+원본 PCM 오디오, 화자·녹음자 정보, 성별·연령·지역 같은 개인정보성 메타데이터는
+사용하지 않았고 저장소나 배포물에도 포함하지 않습니다. 원문·발화형·라벨·분할
+파일도 재배포하지 않으며, 배포물에는 학습된 계수와 자질 이름만 포함합니다.
+
+3. 출처와 이용 조건
+
+데이터 안내:
+https://www.aihub.or.kr/aihubdata/data/view.do?aihubDataSe=data&dataSetSn=484
+
+AI 허브 이용정책:
+https://www.aihub.or.kr/intrcn/guid/usagepolicy.do?currMenu=151&topMenu=105
+
+AI 허브 FAQ(학습 모델 배포):
+https://www.aihub.or.kr/aihubnews/faq/list.do
+
+AI 허브는 해당 데이터로 학습한 모델과 서비스의 배포·활용을 허용하지만, 원본
+데이터의 권리와 이용 조건은 AI 허브 이용정책을 따릅니다. 저장소의 MIT
+라이선스는 원본 AI 허브 데이터를 재라이선스하지 않습니다.
+
+English
+
+1. Model
+
+The bundled number-reading classifier
+(src/g2p_ko/data/number_reading_model.json) is used only when deterministic
+rules cannot decide how a number should be read. A small multinomial logistic
+regression chooses one of three readings, or leaves the rule-based decision
+unchanged when the evidence is insufficient.
+
+- digitwise: read each digit separately, as in phone numbers and identifiers
+- sino: use Sino-Korean numerals
+- native: use native Korean numerals
+
+Its sparse binary features describe the number's length and value, its unit,
+and the surface forms and part-of-speech tags of nearby Kiwi morphemes.
+Inference evaluates the packaged coefficients in pure Python and requires
+neither a training framework nor the source corpus.
+
+2. Training data
+
+The model is based on version 1.1 (2023-06-28) of AIHub dataset 159,
+"숫자가 포함된 패턴 발화 데이터". The dataset was built with funding from
+the Ministry of Science and ICT and support from the National Information
+Society Agency (NIA), Republic of Korea.
+
+The following data and fields were used.
+
+- Label JSON files from the original Training and Validation sets
+- script.scriptITN: written-form input containing numbers
+- script.scriptTN: human-reviewed spoken forms and number-reading labels
+- script.patternTheme and script.scriptId: used only for splitting and audits,
+  never as model features
+- All 21 themes covering identifiers, cardinal and ordinal numbers,
+  transportation, finance, dates and times, units, sizes, sports, addresses,
+  statistics, telephone numbers, currencies, healthcare, and related domains
+
+Exact scriptITN duplicates from different speakers were removed, reducing
+4,293,738 labeled records to 148,658 unique sentences. A text-hash split
+produced 133,667 train, 7,473 dev, and 7,518 sealed test sentences.
+
+Only numeric decision sites reached by the rule engine became classifier
+samples. The final model was trained on 63,501 train sites. Its application
+thresholds were calibrated on 2,513 dev sites and checked on 1,095 separate dev
+sites. The 7,518 sealed test sentences were not used for training, calibration,
+or rule development.
+
+No PCM audio or speaker metadata such as identity, sex, age, or region was
+used or included. Original written forms, spoken forms, labels, and split files
+are not redistributed. The distributions contain only trained coefficients and
+feature names.
+
+3. Attribution and terms
+
+Dataset information:
+https://www.aihub.or.kr/aihubdata/data/view.do?aihubDataSe=data&dataSetSn=484
+
+AI-Hub usage policy:
+https://www.aihub.or.kr/intrcn/guid/usagepolicy.do?currMenu=151&topMenu=105
+
+AI-Hub FAQ (distribution of trained models):
+https://www.aihub.or.kr/aihubnews/faq/list.do
+
+AI-Hub permits distribution and use of models and services trained on its
+data. The original dataset remains subject to the AI-Hub usage policy. The
+repository's MIT License does not relicense the original AI-Hub data.

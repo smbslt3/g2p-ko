@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  default:
+    name: 기본 (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.10"
+          - os: ubuntu-latest
+            python-version: "3.13"
+          - os: ubuntu-latest
+            python-version: "3.14"
+          - os: windows-latest
+            python-version: "3.13"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+      - run: uv sync --dev --locked
+      - run: uv run --no-sync python -m pytest -q
+
+  release-artifacts:
+    name: 배포 산출물 (Ubuntu, Python 3.13)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+      - run: uv sync --dev --locked
+      - name: 고정 Git 버전 Kiwi.split 확인
+        run: |
+          uv run --no-sync python - <<'PY'
+          from kiwipiepy import Kiwi
+
+          parts = Kiwi().split("했다")
+          assert [(item.form, item.tag, item.start, item.len) for item in parts] == [
+              ("했", "VV+EP", 0, 1),
+              ("다", "EF", 1, 1),
+          ]
+          PY
+      - name: 재현 빌드 SHA-256 비교
+        shell: bash
+        run: |
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          uv build --out-dir dist-a
+          uv build --out-dir dist-b
+          uv run --no-sync python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+
+          def hashes(directory):
+              return {
+                  path.name: sha256(path.read_bytes()).hexdigest()
+                  for path in Path(directory).iterdir()
+                  if path.is_file()
+              }
+
+          first = hashes("dist-a")
+          second = hashes("dist-b")
+          assert first == second, (first, second)
+          PY
+      - run: uv run --no-sync python tools/check_artifacts.py dist-a/*.whl dist-a/*.tar.gz
+      - name: wheel 최소 설치 및 지연 import 확인
+        run: |
+          uv venv --python 3.13 .ci-wheel-venv
+          uv pip install --python .ci-wheel-venv/bin/python --no-deps dist-a/*.whl
+          .ci-wheel-venv/bin/python - <<'PY'
+          from g2p_ko import G2P, KoreanTTSNormalizer
+
+          assert KoreanTTSNormalizer()("사과 3개") == "사과 세 개"
+          assert callable(G2P())
+          PY
+      - name: sdist 최소 설치 및 지연 import 확인
+        run: |
+          uv venv --python 3.13 .ci-sdist-venv
+          uv pip install --python .ci-sdist-venv/bin/python --no-deps dist-a/*.tar.gz
+          .ci-sdist-venv/bin/python - <<'PY'
+          from g2p_ko import G2P, KoreanTTSNormalizer
+
+          assert KoreanTTSNormalizer()("사과 3개") == "사과 세 개"
+          assert callable(G2P())
+          PY

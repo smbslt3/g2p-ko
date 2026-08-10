@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling==1.31.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "g2p-ko"
+version = "0.1.0"
+description = "한국어 TTS 입력을 위한 보수적 CPU 전용 텍스트 정규화·G2P"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "g2p-ko contributors" }]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = ["kiwipiepy>=0.23.2"]
+
+[project.urls]
+Repository = "https://github.com/smbslt3/g2p-ko"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3,<9",
+  "tomli>=2; python_version < '3.11'",
+]
+
+[tool.uv.sources]
+kiwipiepy = { git = "https://github.com/bab2min/kiwipiepy.git", rev = "4f5ee9beacfdc84d537f57d1648a1f6898c71935" }
+
+[tool.uv.extra-build-dependencies]
+kiwipiepy = ["cmake>=3.12"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/g2p_ko"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/src",
+  "/README.md",
+  "/README.en.md",
+  "/LICENSE",
+  "/NOTICE",
+  "/docs",
+  "/tests",
+  "/tools",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

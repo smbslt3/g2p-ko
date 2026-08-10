@@ -1,0 +1,44 @@
+# Python 바이트코드와 테스트 산출물
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# uv와 가상환경
+.venv/
+.uv-cache/
+.uv-python/
+
+# 빌드 산출물
+build/
+dist/
+*.egg-info/
+
+# 도구별 로컬 설정
+.env
+.mypy_cache/
+.ruff_cache/
+.idea/
+.vscode/
+
+# 로컬 전용 데이터셋 (AIHub 등 재배포 금지 자료의 파생물, 루트 폴더만)
+/data/
+
+# 로컬 개발·평가 산출물 — 배포 저장소에는 완성된 패키지(소스·테스트·문서·CI)만 남긴다
+# 학습·채점 도구는 재배포 금지 코퍼스가 있어야만 돌아가므로 제외한다.
+# 학습 결과물인 src/g2p_ko/data/number_reading_model.json은 패키지의 일부라 포함한다.
+/benchmarks/
+/tools/data/
+/tools/score_number_reading.py
+/tools/build_number_reading_dataset.py
+/tools/train_number_reader.py
+/tests/test_score_number_reading.py
+/tests/test_number_reading_dataset_split.py
+/tests/test_number_reader_calibration_split.py
+/tests/test_crossdomain_eval_exercises_classifier.py
+
+# 에이전트 작업 스크래치
+/.superpowers/
+/.codex_tmp/
+/.claude_scratch/
