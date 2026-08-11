@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from g2p_ko import G2P, InputValidationError
+from g2p_ko import G2P, InputValidationError, KoreanTTSNormalizer
 from g2p_ko.routing import is_han
 from tests._internal_pipeline import convert_pipeline
 
@@ -13,6 +13,31 @@ def test_g2p_runs_normalizer_and_pronunciation_in_one_call() -> None:
 
 def test_g2p_applies_user_lexicon_in_the_same_call() -> None:
     assert G2P(lexicon={"NAVER": "네이버"})("NAVER 뉴스") == "네이버 뉴스"
+
+
+def test_g2p_can_skip_normalizer_for_pre_normalized_text() -> None:
+    source = "사과 3개와 국물"
+    normalized = KoreanTTSNormalizer()(source)
+    g2p = G2P()
+
+    assert g2p(normalized, normalize=False) == g2p(source)
+
+
+def test_g2p_skip_normalizer_bypasses_user_lexicon() -> None:
+    g2p = G2P(lexicon={"NAVER": "네이버"})
+
+    assert g2p("NAVER") == "네이버"
+    assert g2p("NAVER", normalize=False) == "에네이브이이알"
+
+
+def test_g2p_rejects_non_boolean_normalize_option() -> None:
+    with pytest.raises(InputValidationError, match="normalize"):
+        G2P()("국물", normalize=0)  # type: ignore[arg-type]
+
+
+def test_g2p_skip_normalizer_keeps_input_length_limit() -> None:
+    with pytest.raises(InputValidationError, match="최대 길이 3"):
+        G2P(max_length=3)("가나다라", normalize=False)
 
 
 def test_g2p_exposes_only_the_string_call_path() -> None:

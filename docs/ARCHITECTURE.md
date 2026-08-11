@@ -4,14 +4,18 @@
 
 ```text
 원문
-→ KoreanTTSNormalizer: written form을 한국어 발화형으로 변환
-→ G2P: 영어 철자화와 한국어 표면 발음 생성
+→ G2P.__call__
+  → normalize=True: KoreanTTSNormalizer로 한국어 발화형 생성
+  → normalize=False: 입력 검증과 NFC만 적용
+→ 영어 철자화와 한국어 표면 발음 생성
 → TTS
 ```
 
-`g2p(text)`는 두 단계를 순서대로 실행합니다. 중간 발화형만 필요하면
-`normalizer(text)`를 사용합니다. 예를 들어 노멀라이저가 `16%`를 `십육 퍼센트`로
-만들고, G2P 음운 단계는 이를 `심뉵 퍼센트`로 바꿉니다.
+`g2p(text)`는 기본적으로 두 단계를 순서대로 실행합니다. 중간 발화형만 필요하면
+`normalizer(text)`를 사용하고, 그 결과를 발음으로 바꿀 때는
+`g2p(normalized, normalize=False)`로 중복 정규화를 생략합니다. 예를 들어
+노멀라이저가 `16%`를 `십육 퍼센트`로 만들고, G2P 음운 단계는 이를
+`심뉵 퍼센트`로 바꿉니다.
 
 ## 노멀라이저
 
@@ -34,7 +38,7 @@ NFC·입력 검증
 ## G2P
 
 ```text
-KoreanTTSNormalizer
+선택적 KoreanTTSNormalizer
 → NFC·입력 검증
 → 보호·숫자·외국어 라우팅
 → ASCII 영어를 알파벳 이름으로 변환
@@ -43,7 +47,9 @@ KoreanTTSNormalizer
 → 최종 출력 검증
 ```
 
-숫자는 앞선 노멀라이저가 읽고 G2P 음운 단계에서는 HARD 경계로 통과합니다.
+`normalize=False`는 입력 검증과 NFC를 유지하면서 TTS 노멀라이저의 숫자·단위·관용
+읽기·사용자 사전 처리를 생략합니다. 따라서 이미 정규화한 발화형에만 사용합니다.
+숫자는 노멀라이저가 읽고 G2P 음운 단계에서는 HARD 경계로 통과합니다.
 지원하지 않는 문자는 보존합니다. 형태소 분석기와 음운 엔진은 교체할 수 없습니다.
 
 ## 공유 상태
